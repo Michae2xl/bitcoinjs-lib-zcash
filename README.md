@@ -70,3 +70,66 @@ const txid = await client.wallet.send(accountId, [
 Original code: see LICENSE (preserved from upstream project)
 Zcash enhancements: MIT (see zcash-enhancements/LICENSE)
 See NOTICE for full attribution.
+
+## How to Test
+
+### 1. Verify the wrapper loads
+
+```bash
+git clone https://github.com/Michae2xl/bitcoinjs-lib-zcash.git
+cd bitcoinjs-lib-zcash/zcash-enhancements
+node -e "const {ZcashClient}=require('./zcash_rpc.cjs'); console.log('Wrapper OK')"
+```
+
+This confirms the ZcashClient wrapper (ZebraRPC + ZkoolWallet) imports correctly. No node required for this step.
+
+### 2. Test against a live Zcash node
+
+If you have zebrad running:
+
+```bash
+cd zcash-enhancements
+node -e "
+const {ZcashClient} = require('./zcash_rpc.cjs');
+const c = new ZcashClient({zebraHost:'127.0.0.1', zebraPort:8232});
+c.chain.getblockchaininfo().then(r => console.log('Chain:', r.chain + 'net, Block:', r.blocks));
+"
+```
+
+### 3. Test wallet operations (requires zkool)
+
+If you have zebrad + zkool running:
+
+```bash
+node -e "
+const {ZcashClient} = require('./zcash_rpc.cjs');
+const c = new ZcashClient({zebraHost:'127.0.0.1', zebraPort:8232, zkoolHost:'127.0.0.1', zkoolPort:8000});
+(async () => {
+  const info = await c.chain.getblockchaininfo();
+  console.log('Block:', info.blocks);
+  const bal = await c.wallet.getBalance(1);
+  console.log('Balance:', bal);
+})();
+"
+```
+
+### 4. Run your own migration
+
+Want to migrate a different Bitcoin project? Use the migration tool:
+
+```bash
+git clone https://github.com/Michae2xl/zcash-migrate.git
+cd zcash-migrate
+npm install
+npm run dev
+# Open http://localhost:3000 and paste any Bitcoin GitHub repo
+```
+
+### Node Setup
+
+| Service | Install | Purpose |
+|---------|---------|---------|
+| [zebrad](https://github.com/ZcashFoundation/zebra) | `cargo install --locked --git https://github.com/ZcashFoundation/zebra zebrad` | Chain data |
+| [zkool](https://github.com/hhanh00/zkool2) | `cargo install --locked --git https://github.com/hhanh00/zkool2 --features=graphql zkool_graphql` | Wallet (Orchard/Halo2) |
+
+Testnet faucet: https://testnet.zecfaucet.com/
